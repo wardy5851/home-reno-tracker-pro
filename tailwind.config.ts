@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,7 +62,28 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
-				}
+				},
+				// Custom colors for home improvement theme
+				renovation: {
+					DEFAULT: '#2A9D8F', // Teal
+					light: '#8ECDC5',
+					dark: '#1F756A',
+					foreground: '#FFFFFF'
+				},
+				terracotta: {
+					DEFAULT: '#E76F51', // Terracotta
+					light: '#F4A896',
+					dark: '#C24D33',
+					foreground: '#FFFFFF'
+				},
+				sand: {
+					DEFAULT: '#F4A261', // Sand
+					light: '#F8C797',
+					dark: '#E18134',
+					foreground: '#2A2A2A'
+				},
+				completed: '#2A9D8F',
+				pending: '#F4A261',
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
