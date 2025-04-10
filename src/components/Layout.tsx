@@ -13,7 +13,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       {/* Background image with overlay */}
       <div className="absolute inset-0 z-0">
         <img 
-          src="https://images.unsplash.com/photo-1524230572899-a752b3835840?auto=format&fit=crop&q=80" 
+          src="https://images.unsplash.com/photo-1448630360428-65456885c650?auto=format&fit=crop&q=80" 
           alt="Home improvement background" 
           className="w-full h-full object-cover"
         />
