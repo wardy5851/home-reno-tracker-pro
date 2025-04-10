@@ -8,7 +8,7 @@ const Header: React.FC = () => {
       <div className="container mx-auto flex justify-between items-center">
         <div className="flex items-center gap-2">
           <Home className="h-6 w-6" />
-          <h1 className="text-xl font-bold">Home Reno Tracker</h1>
+          <h1 className="text-xl font-bold">Ward Home Improvements</h1>
         </div>
       </div>
     </header>
