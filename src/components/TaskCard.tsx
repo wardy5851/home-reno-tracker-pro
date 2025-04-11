@@ -1,11 +1,23 @@
 
 import React from 'react';
 import { Task } from '@/types/task';
-import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
-import { Check, Pencil, Trash2, PoundSterling } from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
+import { 
+  Card, 
+  CardContent, 
+  CardFooter, 
+  CardHeader, 
+  CardTitle 
+} from '@/components/ui/card';
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
-import { Badge } from '@/components/ui/badge';
+import { MoreHorizontal, Edit, Trash, Check, X } from 'lucide-react';
 
 interface TaskCardProps {
   task: Task;
@@ -14,76 +26,88 @@ interface TaskCardProps {
   onToggleComplete: (id: string) => void;
 }
 
-const TaskCard: React.FC<TaskCardProps> = ({
-  task,
-  onEdit,
+const TaskCard: React.FC<TaskCardProps> = ({ 
+  task, 
+  onEdit, 
   onDelete,
-  onToggleComplete,
+  onToggleComplete
 }) => {
+  const formattedDate = formatDistanceToNow(
+    new Date(task.createdAt),
+    { addSuffix: true }
+  );
+
   return (
-    <Card className={cn(
-      "task-card border-l-4",
-      task.completed ? "border-l-completed" : "border-l-pending"
-    )}>
-      <CardHeader className="pb-2">
-        <div className="flex justify-between items-start">
-          <h3 className={cn(
-            "font-medium text-lg",
-            task.completed && "line-through text-muted-foreground"
-          )}>
+    <Card className={`overflow-hidden ${task.completed ? 'bg-muted/30' : ''}`}>
+      <CardHeader className="p-4 pb-2 flex flex-row justify-between items-start space-y-0">
+        <div>
+          <CardTitle className={`text-lg ${task.completed ? 'line-through text-muted-foreground' : ''}`}>
             {task.title}
-          </h3>
-          <Badge 
-            className={cn(
-              "ml-2", 
-              task.completed ? "bg-completed text-completed-foreground" : "bg-pending text-pending-foreground"
-            )}
-          >
-            {task.completed ? 'Completed' : 'Pending'}
-          </Badge>
+          </CardTitle>
+          <div className="flex items-center mt-1">
+            <span className="text-xs text-muted-foreground">
+              Added by {task.assignee} • {formattedDate}
+            </span>
+          </div>
         </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-8 w-8">
+              <MoreHorizontal className="h-4 w-4" />
+              <span className="sr-only">Open menu</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => onEdit(task)}>
+              <Edit className="mr-2 h-4 w-4" />
+              Edit
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onToggleComplete(task.id)}>
+              {task.completed ? (
+                <>
+                  <X className="mr-2 h-4 w-4" />
+                  Mark as incomplete
+                </>
+              ) : (
+                <>
+                  <Check className="mr-2 h-4 w-4" />
+                  Mark as complete
+                </>
+              )}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={() => onDelete(task.id)}
+              className="text-destructive"
+            >
+              <Trash className="mr-2 h-4 w-4" />
+              Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </CardHeader>
-      <CardContent>
-        <p className="text-sm text-muted-foreground mb-2">{task.description}</p>
-        <div className="flex items-center gap-2 mt-3">
-          <Badge variant="outline" className="flex items-center gap-1">
-            <PoundSterling className="h-3 w-3" />
-            {task.cost.toFixed(2)}
-          </Badge>
-          <Badge variant="secondary" className="text-xs">
-            Added by: {task.assignee}
-          </Badge>
-        </div>
+      <CardContent className="p-4 pt-2 pb-2">
+        <p className={`text-sm ${task.completed ? 'text-muted-foreground' : ''}`}>
+          {task.description || 'No description provided.'}
+        </p>
       </CardContent>
-      <CardFooter className="flex justify-end gap-2 pt-2">
-        <Button 
-          variant="outline" 
-          size="icon" 
-          onClick={() => onToggleComplete(task.id)}
-          title={task.completed ? "Mark as pending" : "Mark as completed"}
-        >
-          <Check className={cn(
-            "h-4 w-4",
-            task.completed && "text-completed"
-          )} />
-        </Button>
-        <Button 
-          variant="outline" 
-          size="icon" 
-          onClick={() => onEdit(task)}
-          title="Edit task"
-        >
-          <Pencil className="h-4 w-4" />
-        </Button>
-        <Button 
-          variant="outline" 
-          size="icon" 
-          onClick={() => onDelete(task.id)}
-          className="hover:bg-destructive hover:text-destructive-foreground"
-          title="Delete task"
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>
+      <CardFooter className="p-4 pt-2 flex justify-between items-center">
+        <div className="flex items-center gap-2">
+          <span className={`font-medium ${task.completed ? 'text-muted-foreground' : ''}`}>
+            £{task.cost.toFixed(2)}
+          </span>
+        </div>
+        <div className="flex items-center">
+          {task.completed ? (
+            <span className="text-xs px-2 py-1 bg-completed/20 text-completed/80 rounded-full">
+              Completed
+            </span>
+          ) : (
+            <span className="text-xs px-2 py-1 bg-pending/20 text-pending/80 rounded-full">
+              Pending
+            </span>
+          )}
+        </div>
       </CardFooter>
     </Card>
   );

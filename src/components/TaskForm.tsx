@@ -13,6 +13,7 @@ import {
   DialogFooter 
 } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface TaskFormProps {
   open: boolean;
@@ -28,10 +29,10 @@ const TaskForm: React.FC<TaskFormProps> = ({
   onSubmit 
 }) => {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [title, setTitle] = React.useState(initialData?.title || '');
   const [description, setDescription] = React.useState(initialData?.description || '');
   const [cost, setCost] = React.useState(initialData?.cost.toString() || '0');
-  const [assignee, setAssignee] = React.useState(initialData?.assignee || '');
   const [completed, setCompleted] = React.useState(initialData?.completed || false);
 
   React.useEffect(() => {
@@ -39,14 +40,12 @@ const TaskForm: React.FC<TaskFormProps> = ({
       setTitle(initialData.title);
       setDescription(initialData.description);
       setCost(initialData.cost.toString());
-      setAssignee(initialData.assignee);
       setCompleted(initialData.completed);
     } else if (open) {
       // Reset form when opening for a new task
       setTitle('');
       setDescription('');
       setCost('0');
-      setAssignee('');
       setCompleted(false);
     }
   }, [open, initialData]);
@@ -63,10 +62,10 @@ const TaskForm: React.FC<TaskFormProps> = ({
       return;
     }
     
-    if (!assignee.trim()) {
+    if (!user) {
       toast({
         title: "Error",
-        description: "Assignee is required",
+        description: "You must be logged in to create a task",
         variant: "destructive"
       });
       return;
@@ -86,7 +85,9 @@ const TaskForm: React.FC<TaskFormProps> = ({
       title,
       description,
       cost: numericCost,
-      assignee,
+      // For new tasks, use the logged-in user's name
+      // For existing tasks, preserve the original assignee
+      assignee: initialData ? initialData.assignee : user.name,
       completed
     });
     
@@ -137,15 +138,17 @@ const TaskForm: React.FC<TaskFormProps> = ({
                 placeholder="0.00"
               />
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="assignee">Added by</Label>
-              <Input
-                id="assignee"
-                value={assignee}
-                onChange={(e) => setAssignee(e.target.value)}
-                placeholder="Your name"
-              />
-            </div>
+            {initialData && (
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="assignee">Added by</Label>
+                <Input
+                  id="assignee"
+                  value={initialData.assignee}
+                  disabled
+                  className="bg-muted"
+                />
+              </div>
+            )}
             {initialData && (
               <div className="flex items-center space-x-2">
                 <input 
