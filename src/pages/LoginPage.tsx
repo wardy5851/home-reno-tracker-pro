@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -7,7 +6,7 @@ import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { Tool, Lock, User } from 'lucide-react';
+import { Hammer, Lock, User } from 'lucide-react';
 
 const formSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -53,7 +52,7 @@ const LoginPage = () => {
         <div className="max-w-md w-full bg-white/95 dark:bg-gray-900/90 rounded-lg shadow-xl p-8 backdrop-blur-sm">
           <div className="flex justify-center mb-6">
             <div className="bg-primary/10 p-3 rounded-full">
-              <Tool className="h-10 w-10 text-primary" />
+              <Hammer className="h-10 w-10 text-primary" />
             </div>
           </div>
           
