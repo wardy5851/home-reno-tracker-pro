@@ -7,6 +7,7 @@ interface User {
   id: string;
   name: string;
   email: string;
+  isAdmin?: boolean;
 }
 
 interface AuthContextType {
@@ -37,31 +38,73 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (email: string, password: string) => {
     setLoading(true);
     try {
-      // Simple authentication - in a real app, this would be an API call
-      if (email && password.length >= 6) {
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 800));
-        
-        // Mock user object
-        const loggedInUser = {
+      // Get stored credentials
+      const storedCredentials = localStorage.getItem('app_credentials');
+      
+      // If no stored credentials but email/password meet basic requirements, 
+      // create an admin user (first user setup)
+      if (!storedCredentials && email && password.length >= 6) {
+        // Create first admin user
+        const firstAdminUser = {
           id: '1',
           name: email.split('@')[0],
-          email
+          email,
+          isAdmin: true
         };
         
-        // Save user to localStorage
-        localStorage.setItem('user', JSON.stringify(loggedInUser));
-        setUser(loggedInUser);
+        // Store user credentials
+        const credentials = { [email]: password };
+        localStorage.setItem('app_credentials', JSON.stringify(credentials));
+        
+        // Store user in users list
+        const users = [firstAdminUser];
+        localStorage.setItem('app_users', JSON.stringify(users));
+        
+        // Set as logged in user
+        localStorage.setItem('user', JSON.stringify(firstAdminUser));
+        setUser(firstAdminUser);
         
         toast({
-          title: "Login successful",
-          description: `Welcome back, ${loggedInUser.name}!`,
+          title: "Welcome to the system",
+          description: "You've been set up as the first administrator.",
         });
         
         navigate('/');
-      } else {
-        throw new Error('Invalid credentials');
+        return;
       }
+      
+      // Regular login flow
+      if (storedCredentials) {
+        const credentials = JSON.parse(storedCredentials);
+        
+        // Check if credentials match
+        if (credentials[email] === password) {
+          // Get user details from users list
+          const storedUsers = localStorage.getItem('app_users');
+          
+          if (storedUsers) {
+            const users = JSON.parse(storedUsers);
+            const loggedInUser = users.find((u: User) => u.email === email);
+            
+            if (loggedInUser) {
+              // Save user to localStorage
+              localStorage.setItem('user', JSON.stringify(loggedInUser));
+              setUser(loggedInUser);
+              
+              toast({
+                title: "Login successful",
+                description: `Welcome back, ${loggedInUser.name}!`,
+              });
+              
+              navigate('/');
+              return;
+            }
+          }
+        }
+      }
+      
+      // If we get here, authentication failed
+      throw new Error('Invalid credentials');
     } catch (error) {
       toast({
         title: "Login failed",

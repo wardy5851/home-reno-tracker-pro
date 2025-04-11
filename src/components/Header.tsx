@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Home, PieChart, LogOut, User } from 'lucide-react';
+import { Home, PieChart, LogOut, User, Shield } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -46,6 +46,21 @@ const Header: React.FC = () => {
                   <span>Dashboard</span>
                 </Link>
               </li>
+              {user?.isAdmin && (
+                <li>
+                  <Link 
+                    to="/admin" 
+                    className={`flex items-center gap-1 px-3 py-1 rounded-md ${
+                      location.pathname === '/admin' 
+                        ? 'bg-primary-foreground/20' 
+                        : 'hover:bg-primary-foreground/10'
+                    }`}
+                  >
+                    <Shield className="h-4 w-4" />
+                    <span>Admin</span>
+                  </Link>
+                </li>
+              )}
             </ul>
           </nav>
           
