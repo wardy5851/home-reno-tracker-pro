@@ -20,19 +20,18 @@ import { useToast } from '@/hooks/use-toast';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { User, UserPlus, X, CheckCircle, Shield } from 'lucide-react';
+import { User, UserPlus, X, CheckCircle, Shield, Edit } from 'lucide-react';
 
 // Define user schema for form validation
 const userFormSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Please enter a valid email address'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
+  password: z.string().min(6, 'Password must be at least 6 characters').optional(),
   isAdmin: z.boolean().default(false),
 });
 
 type UserFormValues = z.infer<typeof userFormSchema>;
 
-// Define the user interface
 interface AppUser {
   id: string;
   name: string;
@@ -45,7 +44,9 @@ const AdminPage = () => {
   const { toast } = useToast();
   const [users, setUsers] = useState<AppUser[]>([]);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<AppUser | null>(null);
 
   // Initialize form
   const form = useForm<UserFormValues>({
@@ -54,6 +55,15 @@ const AdminPage = () => {
       name: '',
       email: '',
       password: '',
+      isAdmin: false,
+    },
+  });
+
+  const editForm = useForm<UserFormValues>({
+    resolver: zodResolver(userFormSchema),
+    defaultValues: {
+      name: '',
+      email: '',
       isAdmin: false,
     },
   });
@@ -129,6 +139,65 @@ const AdminPage = () => {
     }
   };
 
+  const handleEditUser = async (values: UserFormValues) => {
+    setIsSubmitting(true);
+    try {
+      if (!selectedUser) return;
+
+      // Check if email is being changed and if it already exists
+      if (values.email !== selectedUser.email && users.some(u => u.email === values.email)) {
+        toast({
+          title: 'User update failed',
+          description: 'A user with this email already exists',
+          variant: 'destructive'
+        });
+        return;
+      }
+
+      // Update user in users array
+      const updatedUsers = users.map(u => {
+        if (u.id === selectedUser.id) {
+          return {
+            ...u,
+            name: values.name,
+            email: values.email,
+            isAdmin: values.isAdmin,
+          };
+        }
+        return u;
+      });
+
+      // If password is being updated, update credentials
+      if (values.password) {
+        const storedCredentials = localStorage.getItem('app_credentials') || '{}';
+        const credentialsObj = JSON.parse(storedCredentials);
+        credentialsObj[values.email] = values.password;
+        localStorage.setItem('app_credentials', JSON.stringify(credentialsObj));
+      }
+
+      // Update localStorage and state
+      setUsers(updatedUsers);
+      localStorage.setItem('app_users', JSON.stringify(updatedUsers));
+
+      toast({
+        title: 'User updated successfully',
+        description: `${values.name}'s details have been updated`,
+      });
+
+      setIsEditDialogOpen(false);
+      setSelectedUser(null);
+      editForm.reset();
+    } catch (error) {
+      toast({
+        title: 'Error updating user',
+        description: 'An unexpected error occurred',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleDeleteUser = (userId: string) => {
     // Get the user email before deletion for credential cleanup
     const userToDelete = users.find(u => u.id === userId);
@@ -156,6 +225,17 @@ const AdminPage = () => {
       title: 'User deleted',
       description: `${userToDelete.name} has been removed from the system`,
     });
+  };
+
+  const handleEditClick = (userToEdit: AppUser) => {
+    setSelectedUser(userToEdit);
+    editForm.reset({
+      name: userToEdit.name,
+      email: userToEdit.email,
+      isAdmin: userToEdit.isAdmin,
+      password: '',
+    });
+    setIsEditDialogOpen(true);
   };
 
   return (
@@ -208,6 +288,14 @@ const AdminPage = () => {
                       </span>
                     </TableCell>
                     <TableCell className="text-right">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleEditClick(user)}
+                        className="mr-2"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
                       <Button
                         variant="ghost"
                         size="sm"
@@ -303,6 +391,96 @@ const AdminPage = () => {
                   </Button>
                   <Button type="submit" disabled={isSubmitting}>
                     {isSubmitting ? 'Creating...' : 'Create User'}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit User Dialog */}
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Edit User</DialogTitle>
+              <DialogDescription>
+                Modify user details. Leave password blank to keep current password.
+              </DialogDescription>
+            </DialogHeader>
+            <Form {...editForm}>
+              <form onSubmit={editForm.handleSubmit(handleEditUser)} className="space-y-4">
+                <FormField
+                  control={editForm.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="John Doe" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={editForm.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <Input placeholder="john@example.com" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={editForm.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>New Password (optional)</FormLabel>
+                      <FormControl>
+                        <Input type="password" placeholder="Leave blank to keep current" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={editForm.control}
+                  name="isAdmin"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel>Admin Access</FormLabel>
+                        <p className="text-sm text-muted-foreground">
+                          Grant this user administrative privileges
+                        </p>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+                <DialogFooter>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => {
+                      setIsEditDialogOpen(false);
+                      setSelectedUser(null);
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={isSubmitting}>
+                    {isSubmitting ? 'Saving...' : 'Save Changes'}
                   </Button>
                 </DialogFooter>
               </form>

@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -112,10 +113,6 @@ const LoginPage = () => {
               >
                 {isSubmitting ? 'Signing in...' : 'Sign in'}
               </Button>
-              
-              <div className="text-center text-sm text-muted-foreground">
-                <p>For demo purposes: Use any email and password (min 6 chars)</p>
-              </div>
             </form>
           </Form>
         </div>

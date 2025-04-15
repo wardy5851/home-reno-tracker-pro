@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { useTaskStore } from '@/lib/store';
 import { format, parseISO, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
@@ -48,10 +47,8 @@ const Dashboard = () => {
     const start = startOfMonth(selectedMonth);
     const end = endOfMonth(selectedMonth);
     
-    // Create an array of all days in the month
     const days = eachDayOfInterval({ start, end });
     
-    // Initialize data for each day
     const dailyData = days.map(day => {
       const dateString = format(day, 'yyyy-MM-dd');
       return {
@@ -62,21 +59,16 @@ const Dashboard = () => {
       };
     });
     
-    // Count tasks created and completed on each day
     tasks.forEach(task => {
       const createdDate = new Date(task.createdAt);
       const createdDateString = format(createdDate, 'yyyy-MM-dd');
       
-      // Check if the task was created in the selected month
       const createdIndex = dailyData.findIndex(d => d.date === createdDateString);
       if (createdIndex !== -1) {
         dailyData[createdIndex].created += 1;
       }
       
-      // Check if the task was completed in the selected month
       if (task.completed) {
-        // Since we don't have a completedAt date, we'll use the task's current completion status
-        // In a real application, you would track the actual completion date
         const completedIndex = dailyData.findIndex(d => d.date === createdDateString);
         if (completedIndex !== -1) {
           dailyData[completedIndex].completed += 1;
@@ -87,7 +79,6 @@ const Dashboard = () => {
     return dailyData;
   }, [tasks, selectedMonth]);
   
-  // Calculate month totals
   const monthlyStats = useMemo(() => {
     const createdInMonth = monthData.reduce((sum, day) => sum + day.created, 0);
     const completedInMonth = monthData.reduce((sum, day) => sum + day.completed, 0);
@@ -97,23 +88,38 @@ const Dashboard = () => {
       ? Math.round((totalCompleted / totalTasksInSystem) * 100) 
       : 0;
     
+    const totalCost = tasks.reduce((sum, task) => sum + task.cost, 0);
+    const completedCost = tasks.filter(task => task.completed).reduce((sum, task) => sum + task.cost, 0);
+    const pendingCost = totalCost - completedCost;
+    const monthlyTotalCost = tasks
+      .filter(task => {
+        const taskDate = new Date(task.createdAt);
+        return (
+          taskDate >= startOfMonth(selectedMonth) &&
+          taskDate <= endOfMonth(selectedMonth)
+        );
+      })
+      .reduce((sum, task) => sum + task.cost, 0);
+    
     return {
       createdInMonth,
       completedInMonth,
       totalTasksInSystem,
       totalCompleted,
-      completionRate
+      completionRate,
+      totalCost,
+      completedCost,
+      pendingCost,
+      monthlyTotalCost
     };
-  }, [tasks, monthData]);
+  }, [tasks, monthData, selectedMonth]);
 
-  // Navigate to previous month
   const goToPreviousMonth = () => {
     const prevMonth = new Date(selectedMonth);
     prevMonth.setMonth(prevMonth.getMonth() - 1);
     setSelectedMonth(prevMonth);
   };
 
-  // Navigate to next month
   const goToNextMonth = () => {
     const nextMonth = new Date(selectedMonth);
     nextMonth.setMonth(nextMonth.getMonth() + 1);
@@ -145,7 +151,6 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Stats cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card>
             <CardHeader className="pb-2">
@@ -169,10 +174,10 @@ const Dashboard = () => {
           
           <Card>
             <CardHeader className="pb-2">
-              <CardDescription>Total Tasks in System</CardDescription>
+              <CardDescription>Monthly Cost Total</CardDescription>
               <CardTitle className="flex items-center gap-2">
                 <BarChartIcon className="h-5 w-5 text-blue-500" />
-                {monthlyStats.totalTasksInSystem}
+                £{monthlyStats.monthlyTotalCost.toFixed(2)}
               </CardTitle>
             </CardHeader>
           </Card>
@@ -187,8 +192,30 @@ const Dashboard = () => {
             </CardHeader>
           </Card>
         </div>
-        
-        {/* Chart */}
+
+        <Card className="w-full">
+          <CardHeader>
+            <CardTitle>Cost Overview</CardTitle>
+            <CardDescription>Summary of all task costs</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="p-4 rounded-lg bg-primary/10">
+                <div className="text-sm font-medium">Total Cost</div>
+                <div className="text-2xl font-bold">£{monthlyStats.totalCost.toFixed(2)}</div>
+              </div>
+              <div className="p-4 rounded-lg bg-emerald-500/10">
+                <div className="text-sm font-medium">Completed Tasks Cost</div>
+                <div className="text-2xl font-bold">£{monthlyStats.completedCost.toFixed(2)}</div>
+              </div>
+              <div className="p-4 rounded-lg bg-amber-500/10">
+                <div className="text-sm font-medium">Pending Tasks Cost</div>
+                <div className="text-2xl font-bold">£{monthlyStats.pendingCost.toFixed(2)}</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         <Card className="w-full mt-4">
           <CardHeader>
             <CardTitle>Task Activity</CardTitle>
@@ -224,7 +251,6 @@ const Dashboard = () => {
           </CardContent>
         </Card>
 
-        {/* Task Table */}
         <Card className="w-full mt-4">
           <CardHeader>
             <CardTitle>Task Details</CardTitle>
