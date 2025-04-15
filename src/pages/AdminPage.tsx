@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import Layout from '@/components/Layout';
@@ -22,7 +21,6 @@ import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { User, UserPlus, X, CheckCircle, Shield, Edit } from 'lucide-react';
 
-// Define user schema for form validation
 const userFormSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Please enter a valid email address'),
@@ -48,7 +46,6 @@ const AdminPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedUser, setSelectedUser] = useState<AppUser | null>(null);
 
-  // Initialize form
   const form = useForm<UserFormValues>({
     resolver: zodResolver(userFormSchema),
     defaultValues: {
@@ -68,7 +65,6 @@ const AdminPage = () => {
     },
   });
 
-  // Load users from localStorage on component mount
   useEffect(() => {
     const storedUsers = localStorage.getItem('app_users');
     if (storedUsers) {
@@ -76,7 +72,6 @@ const AdminPage = () => {
     }
   }, []);
 
-  // Save users to localStorage whenever the users state changes
   useEffect(() => {
     if (users.length > 0) {
       localStorage.setItem('app_users', JSON.stringify(users));
@@ -86,7 +81,6 @@ const AdminPage = () => {
   const handleCreateUser = async (values: UserFormValues) => {
     setIsSubmitting(true);
     try {
-      // Check if email already exists
       if (users.some(u => u.email === values.email)) {
         toast({
           title: 'User creation failed',
@@ -96,7 +90,6 @@ const AdminPage = () => {
         return;
       }
 
-      // Create new user object
       const newUser: AppUser = {
         id: Date.now().toString(),
         name: values.name,
@@ -104,28 +97,23 @@ const AdminPage = () => {
         isAdmin: values.isAdmin,
       };
 
-      // Store credentials separately for authentication
       const credentials = {
         email: values.email,
         password: values.password,
       };
 
-      // Add to credentials store in localStorage
       const storedCredentials = localStorage.getItem('app_credentials') || '{}';
       const credentialsObj = JSON.parse(storedCredentials);
       credentialsObj[values.email] = values.password;
       localStorage.setItem('app_credentials', JSON.stringify(credentialsObj));
 
-      // Update users state
       setUsers(prevUsers => [...prevUsers, newUser]);
 
-      // Show success message
       toast({
         title: 'User created successfully',
         description: `${values.name} has been added to the system`,
       });
 
-      // Close dialog and reset form
       setIsCreateDialogOpen(false);
       form.reset();
     } catch (error) {
@@ -144,17 +132,15 @@ const AdminPage = () => {
     try {
       if (!selectedUser) return;
 
-      // Check if email is being changed and if it already exists
       if (values.email !== selectedUser.email && users.some(u => u.email === values.email)) {
         toast({
-          title: 'User update failed',
-          description: 'A user with this email already exists',
-          variant: 'destructive'
+          title: "User update failed",
+          description: "A user with this email already exists",
+          variant: "destructive"
         });
         return;
       }
 
-      // Update user in users array
       const updatedUsers = users.map(u => {
         if (u.id === selectedUser.id) {
           return {
@@ -167,7 +153,6 @@ const AdminPage = () => {
         return u;
       });
 
-      // If password is being updated, update credentials
       if (values.password) {
         const storedCredentials = localStorage.getItem('app_credentials') || '{}';
         const credentialsObj = JSON.parse(storedCredentials);
@@ -175,12 +160,11 @@ const AdminPage = () => {
         localStorage.setItem('app_credentials', JSON.stringify(credentialsObj));
       }
 
-      // Update localStorage and state
       setUsers(updatedUsers);
       localStorage.setItem('app_users', JSON.stringify(updatedUsers));
 
       toast({
-        title: 'User updated successfully',
+        title: "User updated successfully",
         description: `${values.name}'s details have been updated`,
       });
 
@@ -189,9 +173,9 @@ const AdminPage = () => {
       editForm.reset();
     } catch (error) {
       toast({
-        title: 'Error updating user',
-        description: 'An unexpected error occurred',
-        variant: 'destructive'
+        title: "Error updating user",
+        description: "An unexpected error occurred",
+        variant: "destructive"
       });
     } finally {
       setIsSubmitting(false);
@@ -199,28 +183,23 @@ const AdminPage = () => {
   };
 
   const handleDeleteUser = (userId: string) => {
-    // Get the user email before deletion for credential cleanup
     const userToDelete = users.find(u => u.id === userId);
     if (!userToDelete) return;
     
-    // Remove user from users list
     const updatedUsers = users.filter(user => user.id !== userId);
     setUsers(updatedUsers);
     
-    // Update localStorage
     if (updatedUsers.length === 0) {
       localStorage.removeItem('app_users');
     } else {
       localStorage.setItem('app_users', JSON.stringify(updatedUsers));
     }
     
-    // Remove from credentials store
     const storedCredentials = localStorage.getItem('app_credentials') || '{}';
     const credentialsObj = JSON.parse(storedCredentials);
     delete credentialsObj[userToDelete.email];
     localStorage.setItem('app_credentials', JSON.stringify(credentialsObj));
 
-    // Show success message
     toast({
       title: 'User deleted',
       description: `${userToDelete.name} has been removed from the system`,
@@ -311,7 +290,6 @@ const AdminPage = () => {
           </div>
         )}
 
-        {/* Create User Dialog */}
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogContent>
             <DialogHeader>
@@ -398,7 +376,6 @@ const AdminPage = () => {
           </DialogContent>
         </Dialog>
 
-        {/* Edit User Dialog */}
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
           <DialogContent>
             <DialogHeader>

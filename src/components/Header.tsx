@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Home, PieChart, LogOut, User, Shield } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
@@ -14,7 +13,7 @@ const Header: React.FC = () => {
       <div className="container mx-auto flex justify-between items-center">
         <div className="flex items-center gap-2">
           <Home className="h-6 w-6" />
-          <h1 className="text-xl font-bold">Ward Home Improvements</h1>
+          <h1 className="text-xl font-bold">Ward App</h1>
         </div>
         
         <div className="flex items-center gap-4">

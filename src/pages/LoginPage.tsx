@@ -58,7 +58,7 @@ const LoginPage = () => {
           </div>
           
           <h2 className="text-2xl font-bold text-center mb-6">
-            Ward Home Improvements
+            Ward App
           </h2>
           
           <Form {...form}>
