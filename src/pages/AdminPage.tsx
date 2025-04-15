@@ -1,25 +1,17 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import Layout from '@/components/Layout';
-import { 
-  Table, TableHeader, TableRow, TableHead, 
-  TableBody, TableCell 
-} from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { 
-  Dialog, DialogContent, DialogDescription,
-  DialogHeader, DialogTitle, DialogFooter 
-} from '@/components/ui/dialog';
-import {
-  Form, FormField, FormItem, FormLabel, FormControl, FormMessage
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Form } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { User, UserPlus, X, CheckCircle, Shield, Edit } from 'lucide-react';
+import { UserPlus } from 'lucide-react';
+import { UserFormFields } from '@/components/admin/UserFormFields';
+import { UserTable } from '@/components/admin/UserTable';
+import { EmptyState } from '@/components/admin/EmptyState';
 
 const userFormSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -232,62 +224,13 @@ const AdminPage = () => {
         </div>
 
         {users.length === 0 ? (
-          <div className="rounded-lg border border-dashed p-8 text-center">
-            <User className="mx-auto h-12 w-12 text-muted-foreground" />
-            <h3 className="mt-4 text-lg font-semibold">No users yet</h3>
-            <p className="mt-2 text-muted-foreground">
-              Create your first user to allow them to log in to the system.
-            </p>
-            <Button className="mt-4" onClick={() => setIsCreateDialogOpen(true)}>
-              Create User
-            </Button>
-          </div>
+          <EmptyState onCreateClick={() => setIsCreateDialogOpen(true)} />
         ) : (
-          <div className="rounded-lg border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {users.map(user => (
-                  <TableRow key={user.id}>
-                    <TableCell>{user.name}</TableCell>
-                    <TableCell>{user.email}</TableCell>
-                    <TableCell>
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        user.isAdmin ? 'bg-primary/20 text-primary' : 'bg-muted text-muted-foreground'
-                      }`}>
-                        {user.isAdmin && <Shield className="mr-1 h-3 w-3" />}
-                        {user.isAdmin ? 'Admin' : 'User'}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleEditClick(user)}
-                        className="mr-2"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDeleteUser(user.id)}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+          <UserTable 
+            users={users} 
+            onEditClick={handleEditClick} 
+            onDeleteClick={handleDeleteUser} 
+          />
         )}
 
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
@@ -300,65 +243,7 @@ const AdminPage = () => {
             </DialogHeader>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(handleCreateUser)} className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="John Doe" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email</FormLabel>
-                      <FormControl>
-                        <Input placeholder="john@example.com" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="password"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Password</FormLabel>
-                      <FormControl>
-                        <Input type="password" placeholder="******" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="isAdmin"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                      <div className="space-y-1 leading-none">
-                        <FormLabel>Admin Access</FormLabel>
-                        <p className="text-sm text-muted-foreground">
-                          Grant this user administrative privileges
-                        </p>
-                      </div>
-                    </FormItem>
-                  )}
-                />
+                <UserFormFields form={form} />
                 <DialogFooter>
                   <Button 
                     type="button" 
@@ -386,65 +271,7 @@ const AdminPage = () => {
             </DialogHeader>
             <Form {...editForm}>
               <form onSubmit={editForm.handleSubmit(handleEditUser)} className="space-y-4">
-                <FormField
-                  control={editForm.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="John Doe" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={editForm.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email</FormLabel>
-                      <FormControl>
-                        <Input placeholder="john@example.com" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={editForm.control}
-                  name="password"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>New Password (optional)</FormLabel>
-                      <FormControl>
-                        <Input type="password" placeholder="Leave blank to keep current" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={editForm.control}
-                  name="isAdmin"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                      <div className="space-y-1 leading-none">
-                        <FormLabel>Admin Access</FormLabel>
-                        <p className="text-sm text-muted-foreground">
-                          Grant this user administrative privileges
-                        </p>
-                      </div>
-                    </FormItem>
-                  )}
-                />
+                <UserFormFields form={editForm} isEditing />
                 <DialogFooter>
                   <Button 
                     type="button" 
